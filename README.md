@@ -1,6 +1,6 @@
 # Society Manager Pro
 
-Mobile-first society management app built with **Laravel 12**, **Livewire**, **MySQL**, and **PWA** support. Optional **NativePHP Mobile** builds for Android/iOS.
+Mobile-first society management app built with **Laravel 12**, **Livewire**, **Supabase (PostgreSQL)**, and **PWA** support. Optional **NativePHP Mobile** builds for Android/iOS.
 
 ---
 
@@ -20,9 +20,51 @@ Mobile-first society management app built with **Laravel 12**, **Livewire**, **M
 
 ## Requirements (local development)
 
-- PHP **8.2+** (8.3+ recommended for NativePHP Mobile)
-- Composer, Node.js 20+
-- MySQL 8+
+- PHP **8.2+** with **pdo_pgsql** extension enabled
+- Composer, Node.js 20.19+
+- [Supabase](https://supabase.com) account (free tier works)
+
+### Enable PostgreSQL in PHP (Windows)
+
+1. Open `php.ini`
+2. Uncomment: `extension=pdo_pgsql` and `extension=pgsql`
+3. Restart terminal and run: `php -m | findstr pgsql`
+
+---
+
+## Supabase setup
+
+1. Go to [supabase.com](https://supabase.com) → **New project**
+2. Choose region, set a **database password** (save it)
+3. Wait for the project to finish provisioning
+4. Open **Project Settings → Database**
+5. Copy connection details from **Connection string → URI** or **Host**
+
+### Local `.env` (direct connection)
+
+```env
+DB_CONNECTION=pgsql
+DB_HOST=db.xxxxxxxxxxxx.supabase.co
+DB_PORT=5432
+DB_DATABASE=postgres
+DB_USERNAME=postgres
+DB_PASSWORD=your_supabase_db_password
+DB_SSLMODE=require
+```
+
+### Vercel / serverless (use pooler — recommended)
+
+In Supabase: **Connect → Connection pooling → Transaction mode**
+
+```env
+DB_CONNECTION=pgsql
+DB_HOST=aws-0-ap-south-1.pooler.supabase.com
+DB_PORT=6543
+DB_DATABASE=postgres
+DB_USERNAME=postgres.xxxxxxxxxxxx
+DB_PASSWORD=your_supabase_db_password
+DB_SSLMODE=require
+```
 
 ---
 
@@ -37,19 +79,10 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Edit `.env`:
-
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=society_manager_pro
-DB_USERNAME=root
-DB_PASSWORD=your_password
-```
+Add your Supabase credentials to `.env`, then:
 
 ```bash
-php artisan migrate --seed
+php artisan migrate --seed --force
 npm install
 npm run build
 php artisan serve
@@ -71,7 +104,7 @@ Local OTP is always `123456`.
 
 ## Deploy on Vercel (full guide)
 
-Vercel can host this Laravel app using the community **vercel-php** runtime. This project already includes `vercel.json` and `api/index.php`.
+Vercel hosts this Laravel app using the **vercel-php** runtime. Database is **Supabase PostgreSQL** (external).
 
 ### Important limitations on Vercel
 
@@ -79,79 +112,39 @@ Vercel can host this Laravel app using the community **vercel-php** runtime. Thi
 |-------|-------------------|
 | Web UI + Livewire | Background queue workers |
 | PWA install (HTTPS included) | Local file uploads (documents) |
-| REST API | NativePHP mobile builds |
-| MySQL (external database) | Persistent `storage/` files |
-
-Use **Railway**, **Render**, or a **VPS** if you need queues, file storage, or long-running workers.
+| REST API + Supabase | NativePHP mobile builds |
+| Supabase PostgreSQL | Persistent `storage/` files |
 
 ---
 
 ### Step 1 — Push code to GitHub
 
 ```bash
-git init
 git add .
-git commit -m "Initial commit"
-git remote add origin https://github.com/SahilPatelM/SocietyManagerPro.git
-git push -u origin main
+git commit -m "Switch to Supabase PostgreSQL"
+git push origin main
 ```
 
-Do **not** commit `.env`. Secrets go in the Vercel dashboard only.
+Do **not** commit `.env`.
 
 ---
 
-### Step 2 — Create a MySQL database (required)
+### Step 2 — Run migrations (from your PC)
 
-Vercel does not provide MySQL. Use an external host, for example:
+Vercel cannot run `php artisan migrate` for you. Run once locally against Supabase:
 
-- [Railway](https://railway.app) — MySQL plugin
-- [Aiven](https://aiven.io) — MySQL
-- [PlanetScale](https://planetscale.com) — MySQL-compatible
-- Any shared hosting / VPS MySQL
-
-Note the connection details:
-
-```
-Host:     xxxxx.railway.app
-Port:     3306
-Database: railway
-Username: root
-Password: ********
-```
-
-Run migrations **once from your PC** (recommended). Vercel build servers often cannot reach your MySQL host during deploy:
-
-```bash
-# Point local .env to your remote MySQL, then:
+```powershell
+cd "D:\Projects\Native PHP\society-manager-pro"
 php artisan migrate --seed --force
 ```
 
-Do **not** run migrations in the Vercel build step — it causes deploy failures when the database is unreachable from Vercel's build environment.
+Use the same Supabase credentials as production in your local `.env`.
 
 ---
 
-### Step 3 — Create a Vercel project
+### Step 3 — Vercel environment variables
 
-1. Go to [vercel.com](https://vercel.com) and sign in
-2. Click **Add New → Project**
-3. **Import** your GitHub repo `SocietyManagerPro`
-4. Configure:
-
-| Setting | Value |
-|---------|--------|
-| Framework Preset | **Other** |
-| Root Directory | `./` (project root) |
-| Build Command | `npm ci && npm run build` (auto from `vercel.json`) |
-| Output Directory | leave empty |
-| Install Command | auto from `vercel.json` |
-
-5. Do **not** deploy yet — add environment variables first
-
----
-
-### Step 4 — Environment variables (Vercel dashboard)
-
-Go to **Project → Settings → Environment Variables** and add:
+**Project → Settings → Environment Variables**
 
 #### Required
 
@@ -159,115 +152,66 @@ Go to **Project → Settings → Environment Variables** and add:
 |----------|---------|-------|
 | `APP_NAME` | `Society Manager Pro` | |
 | `APP_ENV` | `production` | |
-| `APP_KEY` | `base64:...` | Run `php artisan key:generate --show` locally |
-| `APP_DEBUG` | `false` | Never `true` in production |
-| `APP_URL` | `https://your-app.vercel.app` | Your Vercel URL (update after first deploy) |
-| `DB_CONNECTION` | `mysql` | |
-| `DB_HOST` | `xxxxx.railway.app` | From your DB provider |
-| `DB_PORT` | `3306` | |
-| `DB_DATABASE` | `railway` | |
-| `DB_USERNAME` | `root` | |
-| `DB_PASSWORD` | `********` | Mark as **Sensitive** |
+| `APP_KEY` | `base64:...` | `php artisan key:generate --show` |
+| `APP_DEBUG` | `false` | |
+| `APP_URL` | `https://your-app.vercel.app` | Update after first deploy |
+| `DB_CONNECTION` | `pgsql` | |
+| `DB_HOST` | `aws-0-....pooler.supabase.com` | **Pooler host** for Vercel |
+| `DB_PORT` | `6543` | Transaction pooler port |
+| `DB_DATABASE` | `postgres` | |
+| `DB_USERNAME` | `postgres.xxxxxxxxxxxx` | Pooler username |
+| `DB_PASSWORD` | `********` | Supabase DB password |
+| `DB_SSLMODE` | `require` | Required for Supabase |
 
 #### Recommended for Vercel
 
-| Variable | Value | Why |
-|----------|-------|-----|
-| `SESSION_DRIVER` | `cookie` | Works without DB writes every request |
-| `CACHE_STORE` | `array` | Serverless has no persistent file cache |
-| `QUEUE_CONNECTION` | `sync` | No queue worker on Vercel |
-| `LOG_CHANNEL` | `stderr` | Logs appear in Vercel dashboard |
-| `VERCEL_FORCE_NO_BUILD_CACHE` | `1` | Helps when Composer deploy fails |
+| Variable | Value |
+|----------|-------|
+| `SESSION_DRIVER` | `cookie` |
+| `CACHE_STORE` | `array` |
+| `QUEUE_CONNECTION` | `sync` |
+| `LOG_CHANNEL` | `stderr` |
+| `VERCEL_FORCE_NO_BUILD_CACHE` | `1` |
 
-#### Optional
-
-| Variable | Purpose |
-|----------|---------|
-| `FIREBASE_SERVER_KEY` | Push notifications |
-| `FIREBASE_PROJECT_ID` | Push notifications |
-| `MAIL_MAILER` | Email (use Resend, Mailgun, etc.) |
-| `MAIL_HOST` | SMTP host |
-| `MAIL_USERNAME` | SMTP user |
-| `MAIL_PASSWORD` | SMTP password |
-
-Apply variables to **Production**, **Preview**, and **Development**.
+Apply to **Production**, **Preview**, and **Development**.
 
 ---
 
-### Step 5 — Deploy
+### Step 4 — Vercel project settings
 
-Click **Deploy** in Vercel, or from your PC:
+| Setting | Value |
+|---------|--------|
+| Framework Preset | **Other** |
+| Output Directory | `public` |
+| Build Command | `npm run build` |
+| Install Command | `npm ci` |
 
-```bash
-npm i -g vercel
-vercel login
-vercel
-vercel --prod
+Deploy → **Redeploy without cache** after env changes.
+
+---
+
+### Step 5 — Pull Vercel env locally (optional)
+
+```powershell
+cd "D:\Projects\Native PHP\society-manager-pro"
+vercel link
+vercel env pull .env.vercel
 ```
 
-First deploy takes 3–8 minutes (Composer + npm + PHP runtime).
+Copy DB values from `.env.vercel` into `.env`, then run migrations.
 
 ---
 
-### Step 6 — After first deploy
-
-1. Copy your live URL, e.g. `https://society-manager-pro.vercel.app`
-2. Update **`APP_URL`** in Vercel env vars to that URL
-3. **Redeploy** (Deployments → ⋮ → Redeploy)
-
-Test:
-
-- Login page loads
-- Login works
-- Dashboard loads
-- PWA manifest: `https://your-app.vercel.app/manifest.webmanifest`
-
----
-
-### Step 7 — Custom domain (optional)
-
-1. Vercel → **Project → Settings → Domains**
-2. Add your domain, e.g. `app.yoursociety.com`
-3. Add DNS records Vercel shows (usually `CNAME`)
-4. Update `APP_URL` to `https://app.yoursociety.com`
-5. Redeploy
-
-PWA install works best with a custom domain and HTTPS (Vercel provides HTTPS automatically).
-
----
-
-### Troubleshooting Vercel
+### Troubleshooting Vercel + Supabase
 
 | Problem | Fix |
 |---------|-----|
-| **Database connection failed** | Check `DB_HOST` has **no spaces or duplicates**. Aiven: set `MYSQL_SSL=true`, allow public access, run migrations locally first. |
-| **vercel build exited with 1** | Redeploy **without cache**. Add env var `VERCEL_FORCE_NO_BUILD_CACHE=1`. Ensure `composer.lock` is pushed to GitHub. |
-| **migrate --force failed on deploy** | Migrations removed from build. Run `php artisan migrate --force` locally against remote DB. |
-| **composer: command not found** | Do not run Composer in `installCommand`. Use `"installCommand": "npm ci"` only — `vercel-php` runs `composer install` automatically. |
-| **No Output Directory named "public"** | Push `vercel.json`, `api/`, and `.vercelignore` to GitHub. In Vercel → Settings → General: **Framework Preset = Other**, **Output Directory = public**. Redeploy. |
-| 500 error | Check Vercel → **Functions → Logs**; verify `APP_KEY` and DB vars |
-| CSS/JS missing | Ensure `npm run build` succeeded; check **Build Logs** |
-| Database connection failed | Allow remote connections on MySQL host; verify host/port/password |
-| Migration failed | Run `php artisan migrate --force` locally against remote DB |
-| Deploy cache error | Set `VERCEL_FORCE_NO_BUILD_CACHE=1` and redeploy |
-| Session/login issues | Set `SESSION_DRIVER=cookie` and redeploy |
-| File upload fails | Expected on Vercel — use S3 (see below) |
-
----
-
-### File uploads on Vercel (documents)
-
-Local disk storage is **not persistent** on Vercel. For document uploads, configure S3-compatible storage:
-
-```env
-FILESYSTEM_DISK=s3
-AWS_ACCESS_KEY_ID=...
-AWS_SECRET_ACCESS_KEY=...
-AWS_DEFAULT_REGION=us-east-1
-AWS_BUCKET=your-bucket
-```
-
-Or use [Cloudflare R2](https://www.cloudflare.com/products/r2/) (S3-compatible).
+| `could not connect to server` | Use **pooler** host + port **6543** on Vercel |
+| `DB_HOST` repeated / invalid | Re-enter host — **one value, no spaces** |
+| `pdo_pgsql` missing | Supabase needs PostgreSQL; vercel-php includes pgsql |
+| Session errors | Set `SESSION_DRIVER=cookie` |
+| Build failed | Redeploy with `VERCEL_FORCE_NO_BUILD_CACHE=1` |
+| Tables missing | Run `php artisan migrate --seed --force` locally |
 
 ---
 
@@ -275,19 +219,14 @@ Or use [Cloudflare R2](https://www.cloudflare.com/products/r2/) (S3-compatible).
 
 After deploy on Vercel (HTTPS):
 
-- **Android Chrome:** tap **Install** banner or Settings → Install App
-- **iPhone Safari:** Settings → Install App → follow steps (Share → Add to Home Screen)
-
-Icons and manifest are in `public/manifest.webmanifest` and `public/icons/`.
+- **Android Chrome:** Install banner or Settings → Install App
+- **iPhone Safari:** Settings → Install App → Share → Add to Home Screen
 
 ---
 
 ## NativePHP Android / iOS (not on Vercel)
 
-Native apps are built locally, not on Vercel:
-
 ```bash
-# Add public/icon.png (1024x1024)
 php artisan native:install android
 npm run build
 php artisan native:run android
@@ -310,32 +249,7 @@ Base URL: `/api/v1`
 
 ---
 
-## Project structure
-
-```
-app/
-  Enums/
-  Http/Controllers/Api/
-  Http/Resources/
-  Livewire/           # Mobile-first UI
-  Models/
-  Repositories/
-  Services/
-api/index.php         # Vercel entry point
-vercel.json           # Vercel config
-public/
-  manifest.webmanifest
-  sw.js
-  icons/
-database/migrations/
-lang/en, lang/gu
-resources/views/layouts/mobile.blade.php
-routes/web.php, routes/api.php
-```
-
----
-
-## Environment reference (local `.env`)
+## Environment reference
 
 ```env
 APP_NAME="Society Manager Pro"
@@ -344,12 +258,13 @@ APP_KEY=
 APP_DEBUG=true
 APP_URL=http://localhost
 
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=society_manager_pro
-DB_USERNAME=root
+DB_CONNECTION=pgsql
+DB_HOST=db.xxxxxxxxxxxx.supabase.co
+DB_PORT=5432
+DB_DATABASE=postgres
+DB_USERNAME=postgres
 DB_PASSWORD=
+DB_SSLMODE=require
 
 SESSION_DRIVER=database
 CACHE_STORE=database

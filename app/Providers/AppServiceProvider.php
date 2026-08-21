@@ -18,7 +18,7 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Windows/shell often sets DB_CONNECTION=sqlite, which overrides .env.
-     * Read database settings from .env so the app uses MySQL as configured.
+     * Read database settings from .env (Supabase / PostgreSQL).
      */
     protected function applyDatabaseConfigFromEnvFile(): void
     {
@@ -43,6 +43,8 @@ class AppServiceProvider extends ServiceProvider
             if ($name === 'DB_CONNECTION') {
                 $connection = $value;
                 config(['database.default' => $value]);
+            } elseif ($name === 'DB_URL') {
+                config(['database.connections.pgsql.url' => $value]);
             } elseif ($connection && str_starts_with($name, 'DB_')) {
                 $key = match ($name) {
                     'DB_HOST' => 'host',
@@ -50,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
                     'DB_DATABASE' => 'database',
                     'DB_USERNAME' => 'username',
                     'DB_PASSWORD' => 'password',
+                    'DB_SSLMODE' => 'sslmode',
                     default => null,
                 };
 
