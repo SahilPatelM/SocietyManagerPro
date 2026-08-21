@@ -8,12 +8,52 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->configureForVercel();
         $this->applyDatabaseConfigFromEnvFile();
     }
 
     public function boot(): void
     {
         //
+    }
+
+    /**
+     * Vercel serverless has a read-only filesystem except /tmp.
+     */
+    protected function configureForVercel(): void
+    {
+        if (! env('VERCEL')) {
+            return;
+        }
+
+        $tmp = '/tmp';
+        $storage = $tmp.'/laravel-storage';
+
+        foreach ([
+            $tmp,
+            $tmp.'/views',
+            $storage,
+            $storage.'/framework/views',
+            $storage.'/framework/cache',
+            $storage.'/framework/sessions',
+            $storage.'/logs',
+        ] as $dir) {
+            if (! is_dir($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+        }
+
+        $this->app->useStoragePath($storage);
+
+        config([
+            'view.compiled' => env('VIEW_COMPILED_PATH', $tmp.'/views'),
+            'session.driver' => env('SESSION_DRIVER', 'cookie'),
+            'session.files' => $storage.'/framework/sessions',
+            'cache.default' => env('CACHE_STORE', 'array'),
+            'logging.default' => env('LOG_CHANNEL', 'stderr'),
+            'logging.channels.stack.channels' => ['stderr'],
+            'queue.default' => env('QUEUE_CONNECTION', 'sync'),
+        ]);
     }
 
     /**

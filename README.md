@@ -206,7 +206,8 @@ Copy DB values from `.env.vercel` into `.env`, then run migrations.
 
 | Problem | Fix |
 |---------|-----|
-| `could not connect to server` | Use **pooler** host + port **6543** on Vercel |
+| Empty page / HTTP 500 | Set `APP_KEY`, Supabase pooler vars (`DB_PORT=6543`), `SESSION_DRIVER=cookie`, `LOG_CHANNEL=stderr`. Check **Functions → Logs** in Vercel. Run migrations locally. |
+| `could not connect to server` | Use Supabase **Transaction pooler** host + port **6543** on Vercel |
 | `DB_HOST` repeated / invalid | Re-enter host — **one value, no spaces** |
 | `pdo_pgsql` missing | Supabase needs PostgreSQL; vercel-php includes pgsql |
 | Session errors | Set `SESSION_DRIVER=cookie` |
