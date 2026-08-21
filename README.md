@@ -154,7 +154,7 @@ Use the same Supabase credentials as production in your local `.env`.
 | `APP_ENV` | `production` | |
 | `APP_KEY` | `base64:...` | `php artisan key:generate --show` |
 | `APP_DEBUG` | `false` | |
-| `APP_URL` | `https://your-app.vercel.app` | Update after first deploy |
+| `APP_URL` | `https://your-app.vercel.app` | Must use **https://** (not http) |
 | `DB_CONNECTION` | `pgsql` | |
 | `DB_HOST` | `aws-0-....pooler.supabase.com` | **Pooler host** for Vercel |
 | `DB_PORT` | `6543` | Transaction pooler port |

@@ -12,7 +12,7 @@
         role="region"
         aria-label="{{ __('app.pwa_install_title') }}"
     >
-        <img src="{{ asset('icons/icon-192.png') }}" alt="" class="pwa-install-icon" width="44" height="44">
+        <img src="/icons/icon-192.png" alt="" class="pwa-install-icon" width="44" height="44">
         <div class="min-w-0 flex-1">
             <p class="pwa-install-title">{{ __('app.pwa_install_title') }}</p>
             <p class="pwa-install-text">{{ __('app.pwa_install_android_hint') }}</p>
@@ -33,7 +33,7 @@
         role="region"
         aria-label="{{ __('app.pwa_install_title') }}"
     >
-        <img src="{{ asset('icons/icon-192.png') }}" alt="" class="pwa-install-icon" width="44" height="44">
+        <img src="/icons/icon-192.png" alt="" class="pwa-install-icon" width="44" height="44">
         <div class="min-w-0 flex-1">
             <p class="pwa-install-title">{{ __('app.pwa_install_title') }}</p>
             <p class="pwa-install-text">{{ __('app.pwa_install_ios_hint') }}</p>

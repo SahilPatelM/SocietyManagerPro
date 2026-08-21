@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -54,6 +55,21 @@ class AppServiceProvider extends ServiceProvider
             'logging.channels.stack.channels' => ['stderr'],
             'queue.default' => env('QUEUE_CONNECTION', 'sync'),
         ]);
+
+        $appUrl = env('APP_URL');
+
+        if ($vercelUrl = env('VERCEL_URL')) {
+            $appUrl = 'https://'.$vercelUrl;
+        } elseif ($appUrl) {
+            $appUrl = preg_replace('#^http://#i', 'https://', $appUrl);
+        }
+
+        if ($appUrl) {
+            config(['app.url' => $appUrl, 'app.asset_url' => $appUrl]);
+            URL::forceRootUrl(rtrim($appUrl, '/'));
+        }
+
+        URL::forceScheme('https');
     }
 
     /**
