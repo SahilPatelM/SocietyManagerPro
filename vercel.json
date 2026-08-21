@@ -2,8 +2,8 @@
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "version": 2,
     "framework": null,
-    "buildCommand": "npm run build",
-    "installCommand": "npm ci",
+    "buildCommand": "php artisan livewire:publish --assets --no-interaction && npm run build",
+    "installCommand": "npm ci && composer install --no-dev --optimize-autoloader --no-interaction",
     "outputDirectory": "public",
     "functions": {
         "api/index.php": {
@@ -16,11 +16,15 @@
             "dest": "/build/$1"
         },
         {
+            "src": "/vendor/livewire/(.*)",
+            "dest": "/public/vendor/livewire/$1"
+        },
+        {
             "src": "/livewire-([^/]+)/(.*)",
             "dest": "/api/index.php"
         },
         {
-            "src": "/(.*\\.(?:css|js|png|jpg|jpeg|gif|svg|ico|ttf|woff|woff2|eot|otf|webp|avif|txt|webmanifest))$",
+            "src": "/(?!livewire-)(.*\\.(?:css|js|png|jpg|jpeg|gif|svg|ico|ttf|woff|woff2|eot|otf|webp|avif|txt|webmanifest))$",
             "dest": "/public/$1"
         },
         {
