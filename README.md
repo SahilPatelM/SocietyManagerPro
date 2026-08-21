@@ -119,14 +119,14 @@ Username: root
 Password: ********
 ```
 
-Run migrations once from your PC (before or after Vercel deploy):
+Run migrations **once from your PC** (recommended). Vercel build servers often cannot reach your MySQL host during deploy:
 
 ```bash
-# Temporarily point .env to the remote DB, then:
+# Point local .env to your remote MySQL, then:
 php artisan migrate --seed --force
 ```
 
-Or let Vercel run migrations on deploy (already configured in `composer.json` → `vercel` script).
+Do **not** run migrations in the Vercel build step — it causes deploy failures when the database is unreachable from Vercel's build environment.
 
 ---
 
@@ -240,6 +240,7 @@ PWA install works best with a custom domain and HTTPS (Vercel provides HTTPS aut
 
 | Problem | Fix |
 |---------|-----|
+| **migrate --force failed on deploy** | Removed from build. Run `php artisan migrate --force` locally with remote DB credentials in `.env`. Ensure MySQL allows remote connections. |
 | **composer: command not found** | Do not run Composer in `installCommand`. Use `"installCommand": "npm ci"` only — `vercel-php` runs `composer install` automatically. |
 | **No Output Directory named "public"** | Push `vercel.json`, `api/`, and `.vercelignore` to GitHub. In Vercel → Settings → General: **Framework Preset = Other**, **Output Directory = public**. Redeploy. |
 | 500 error | Check Vercel → **Functions → Logs**; verify `APP_KEY` and DB vars |
