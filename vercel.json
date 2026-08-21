@@ -2,8 +2,8 @@
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "version": 2,
     "framework": null,
-    "buildCommand": "php artisan livewire:publish --assets --no-interaction && npm run build",
-    "installCommand": "npm ci && composer install --no-dev --optimize-autoloader --no-interaction",
+    "buildCommand": "npm run build",
+    "installCommand": "npm ci",
     "outputDirectory": "public",
     "functions": {
         "api/index.php": {
