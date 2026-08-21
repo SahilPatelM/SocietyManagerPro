@@ -6,6 +6,6 @@
  */
 chdir(dirname(__DIR__));
 
-require __DIR__.'/../bootstrap/vercel-env.php';
+require_once __DIR__.'/../bootstrap/vercel-env.php';
 
 require __DIR__.'/../public/index.php';
