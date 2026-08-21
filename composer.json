@@ -62,7 +62,7 @@
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
         ],
         "vercel": [
-            "@php -r \"echo 'Vercel build step complete'.PHP_EOL;\""
+            "@php artisan package:discover --ansi"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
@@ -78,7 +78,12 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": []
+            "dont-discover": [
+                "laravel/pail",
+                "laravel/sail",
+                "nativephp/mobile",
+                "nunomaduro/collision"
+            ]
         }
     },
     "config": {

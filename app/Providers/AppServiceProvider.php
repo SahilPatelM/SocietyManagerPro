@@ -15,7 +15,15 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        if ($this->runningOnVercel() && ($appUrl = env('APP_URL'))) {
+            URL::forceRootUrl(rtrim($appUrl, '/'));
+            URL::forceScheme('https');
+        }
+    }
+
+    protected function runningOnVercel(): bool
+    {
+        return env('VERCEL') || env('VERCEL_URL');
     }
 
     /**
@@ -23,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureForVercel(): void
     {
-        if (! env('VERCEL')) {
+        if (! $this->runningOnVercel()) {
             return;
         }
 
@@ -48,28 +56,13 @@ class AppServiceProvider extends ServiceProvider
 
         config([
             'view.compiled' => env('VIEW_COMPILED_PATH', $tmp.'/views'),
-            'session.driver' => env('SESSION_DRIVER', 'cookie'),
+            'session.driver' => 'cookie',
             'session.files' => $storage.'/framework/sessions',
-            'cache.default' => env('CACHE_STORE', 'array'),
-            'logging.default' => env('LOG_CHANNEL', 'stderr'),
+            'cache.default' => 'array',
+            'logging.default' => 'stderr',
             'logging.channels.stack.channels' => ['stderr'],
-            'queue.default' => env('QUEUE_CONNECTION', 'sync'),
+            'queue.default' => 'sync',
         ]);
-
-        $appUrl = env('APP_URL');
-
-        if ($vercelUrl = env('VERCEL_URL')) {
-            $appUrl = 'https://'.$vercelUrl;
-        } elseif ($appUrl) {
-            $appUrl = preg_replace('#^http://#i', 'https://', $appUrl);
-        }
-
-        if ($appUrl) {
-            config(['app.url' => $appUrl, 'app.asset_url' => $appUrl]);
-            URL::forceRootUrl(rtrim($appUrl, '/'));
-        }
-
-        URL::forceScheme('https');
     }
 
     /**
