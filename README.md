@@ -240,6 +240,7 @@ PWA install works best with a custom domain and HTTPS (Vercel provides HTTPS aut
 
 | Problem | Fix |
 |---------|-----|
+| **Database connection failed** | Check `DB_HOST` has **no spaces or duplicates**. Aiven: set `MYSQL_SSL=true`, allow public access, run migrations locally first. |
 | **vercel build exited with 1** | Redeploy **without cache**. Add env var `VERCEL_FORCE_NO_BUILD_CACHE=1`. Ensure `composer.lock` is pushed to GitHub. |
 | **migrate --force failed on deploy** | Migrations removed from build. Run `php artisan migrate --force` locally against remote DB. |
 | **composer: command not found** | Do not run Composer in `installCommand`. Use `"installCommand": "npm ci"` only — `vercel-php` runs `composer install` automatically. |
