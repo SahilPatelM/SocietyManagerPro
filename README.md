@@ -240,7 +240,8 @@ PWA install works best with a custom domain and HTTPS (Vercel provides HTTPS aut
 
 | Problem | Fix |
 |---------|-----|
-| **No Output Directory named "public"** | Push `vercel.json`, `api/`, and `.vercelignore` to GitHub. In Vercel → Settings → General: **Framework Preset = Other**, **Output Directory = public** (or leave empty if `vercel.json` sets it). Redeploy. |
+| **composer: command not found** | Do not run Composer in `installCommand`. Use `"installCommand": "npm ci"` only — `vercel-php` runs `composer install` automatically. |
+| **No Output Directory named "public"** | Push `vercel.json`, `api/`, and `.vercelignore` to GitHub. In Vercel → Settings → General: **Framework Preset = Other**, **Output Directory = public**. Redeploy. |
 | 500 error | Check Vercel → **Functions → Logs**; verify `APP_KEY` and DB vars |
 | CSS/JS missing | Ensure `npm run build` succeeded; check **Build Logs** |
 | Database connection failed | Allow remote connections on MySQL host; verify host/port/password |
